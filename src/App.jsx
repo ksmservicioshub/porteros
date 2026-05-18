@@ -9,7 +9,7 @@ import { verifyLicense } from './services/license_checker';
 import { startIntercomOnboarding, completePendingIntercomRegistration } from './services/intercom_license';
 
 // --- ENVOLTORIO PARA EL VISITANTE ---
-const VisitorWrapper = ({ mode }) => {
+const VisitorWrapper = ({ mode = 'portero' }) => {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const homeId = searchParams.get('home_id');
@@ -56,7 +56,6 @@ const ProtectedOwnerRoute = () => {
 };
 
 function App() {
-  const [deviceMode, setDeviceMode] = useState('portero'); 
   const isNative = Capacitor.isNativePlatform();
 
   // INYECCIÓN DE LICENCIA KSM + AUTO-REGISTRO
@@ -90,30 +89,12 @@ function App() {
 
   return (
     <BrowserRouter>
-      {/* Botones temporales para desarrollo (Solo se ven en Web, no en el APK) */}
-      {!isNative && (
-        <div style={{ position: 'fixed', top: 10, left: 10, zIndex: 100, display: 'flex', gap: '10px' }}>
-          <Link to="/?home_id=e26eca69-d0d8-47df-9c8d-a1567ecc2481" style={{ padding: '8px 12px', background: '#3a86ff', color: 'white', border: 'none', borderRadius: '4px', textDecoration: 'none', fontSize: '0.8rem' }}>
-            Simular Escaneo de QR (Timbre)
-          </Link>
-          <Link to="/login" style={{ padding: '8px 12px', background: '#06d6a0', color: 'white', border: 'none', borderRadius: '4px', textDecoration: 'none', fontSize: '0.8rem' }}>
-            App Propietario
-          </Link>
-          <button 
-            onClick={() => setDeviceMode(prev => prev === 'portero' ? 'timbre' : 'portero')}
-            style={{ padding: '8px 12px', background: '#ef476f', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem' }}
-          >
-            Alternar Vista Visitante: {deviceMode === 'portero' ? 'Timbre' : 'Portero'}
-          </button>
-        </div>
-      )}
-
       <Routes>
         <Route path="/login" element={<Login />} />
         
         {/* Ruta pública para los que escanean el QR */}
         {/* Si el dueño abre el APK en Android, lo mandamos forzadamente a hacer Login */}
-        <Route path="/" element={isNative ? <Navigate to="/owner" replace /> : <VisitorWrapper mode={deviceMode} />} />
+        <Route path="/" element={isNative ? <Navigate to="/owner" replace /> : <VisitorWrapper />} />
         
         {/* Ruta privada para el monitor del dueño */}
         <Route path="/owner" element={<ProtectedOwnerRoute />} />

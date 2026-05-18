@@ -11,8 +11,25 @@ const presets = {
 };
 
 // Dynamic Web Audio Ringtone Synthesizer
-const playRingSound = (type) => {
+const playRingSound = (type, customAudioRef = null) => {
   try {
+    if (type === 'custom') {
+      const base64Audio = localStorage.getItem('ksm_intercom_custom_ringtone_data');
+      if (base64Audio) {
+        if (customAudioRef && customAudioRef.current) {
+          customAudioRef.current.pause();
+          customAudioRef.current = null;
+        }
+        const audio = new Audio(base64Audio);
+        audio.loop = false;
+        audio.play().catch(e => console.warn("Audio play blocked or failed", e));
+        if (customAudioRef) {
+          customAudioRef.current = audio;
+        }
+      }
+      return;
+    }
+
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     if (!AudioContext) return;
     const ctx = new AudioContext();
@@ -119,6 +136,9 @@ export const OwnerMode = ({ session }) => {
   const pcRef = useRef(null);
   const channelRef = useRef(null);
   const fileInputRef = useRef(null);
+  const audioInputRef = useRef(null);
+  const customAudioRef = useRef(null);
+  const iceCandidatesBufferRef = useRef([]);
 
   // Sync settings with localStorage
   useEffect(() => {
@@ -142,16 +162,16 @@ export const OwnerMode = ({ session }) => {
     localStorage.setItem('ksm_intercom_bg_value', bgValue);
   }, [bgType, bgValue]);
 
-  // Sync background image with active visitors in real-time when it changes
+  // Sync background image and mode with active visitors in real-time when it changes
   useEffect(() => {
     if (channelRef.current && homeId) {
       channelRef.current.send({
         type: 'broadcast',
         event: 'bg_sync',
-        payload: { type: bgType, value: bgValue }
+        payload: { type: bgType, value: bgValue, appMode }
       });
     }
-  }, [bgType, bgValue, homeId]);
+  }, [bgType, bgValue, appMode, homeId]);
 
   // 1. Al abrir la app, buscar a qué "Hogar" pertenece este usuario
   useEffect(() => {
@@ -181,7 +201,7 @@ export const OwnerMode = ({ session }) => {
       .on('broadcast', { event: 'ring_doorbell' }, ({ payload }) => {
         if (appMode === 'comercio') {
           // Comercio Mode: simple ring and notify
-          if (soundEnabled) playRingSound(ringtoneType);
+          if (soundEnabled) playRingSound(ringtoneType, customAudioRef);
           if (vibrationEnabled) triggerVibration(ringtoneType);
           
           channelRef.current.send({
@@ -198,8 +218,12 @@ export const OwnerMode = ({ session }) => {
         }
       })
       .on('broadcast', { event: 'webrtc_ice' }, async ({ payload }) => {
-        if (payload.target === 'owner' && pcRef.current) {
-          await pcRef.current.addIceCandidate(new RTCIceCandidate(payload.candidate));
+        if (payload.target === 'owner') {
+          if (pcRef.current && pcRef.current.remoteDescription) {
+            await pcRef.current.addIceCandidate(new RTCIceCandidate(payload.candidate));
+          } else {
+            iceCandidatesBufferRef.current.push(payload.candidate);
+          }
         }
       })
       .on('broadcast', { event: 'request_bg' }, () => {
@@ -207,7 +231,7 @@ export const OwnerMode = ({ session }) => {
           channelRef.current.send({
             type: 'broadcast',
             event: 'bg_sync',
-            payload: { type: bgType, value: bgValue }
+            payload: { type: bgType, value: bgValue, appMode }
           });
         }
       })
@@ -220,22 +244,33 @@ export const OwnerMode = ({ session }) => {
 
   // 3. Ringtone and Vibration loop during incoming portero call
   useEffect(() => {
-    if (callStatus !== 'ringing') return;
+    if (callStatus !== 'ringing' && callStatus !== 'ringing_comercio') return;
 
     const ringLoop = () => {
-      if (soundEnabled) playRingSound(ringtoneType);
+      if (soundEnabled) playRingSound(ringtoneType, customAudioRef);
       if (vibrationEnabled) triggerVibration(ringtoneType);
     };
 
     ringLoop();
     const interval = setInterval(ringLoop, 3000);
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      if (customAudioRef.current) {
+        customAudioRef.current.pause();
+        customAudioRef.current = null;
+      }
+    };
   }, [callStatus, soundEnabled, vibrationEnabled, ringtoneType]);
 
   const handleAccept = async () => {
     setCallStatus('connected');
     setIsMuted(false);
+
+    if (customAudioRef.current) {
+      customAudioRef.current.pause();
+      customAudioRef.current = null;
+    }
 
     // 1. Crear conexión
     pcRef.current = new RTCPeerConnection({
@@ -270,6 +305,17 @@ export const OwnerMode = ({ session }) => {
 
     // 5. Responder oferta
     await pcRef.current.setRemoteDescription(new RTCSessionDescription(incomingOffer));
+
+    // Process buffered candidates once remoteDescription is set
+    for (const candidate of iceCandidatesBufferRef.current) {
+      try {
+        await pcRef.current.addIceCandidate(new RTCIceCandidate(candidate));
+      } catch (e) {
+        console.warn("Error adding buffered candidate on owner", e);
+      }
+    }
+    iceCandidatesBufferRef.current = [];
+
     const answer = await pcRef.current.createAnswer();
     await pcRef.current.setLocalDescription(answer);
 
@@ -284,6 +330,12 @@ export const OwnerMode = ({ session }) => {
     setCallStatus('idle');
     setIncomingOffer(null);
     setIsMuted(false);
+
+    if (customAudioRef.current) {
+      customAudioRef.current.pause();
+      customAudioRef.current = null;
+    }
+
     if (pcRef.current) {
       pcRef.current.close();
       pcRef.current = null;
@@ -341,6 +393,25 @@ export const OwnerMode = ({ session }) => {
     reader.readAsDataURL(file);
   };
 
+  const handleAudioUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64 = event.target.result;
+      try {
+        localStorage.setItem('ksm_intercom_custom_ringtone_data', base64);
+        localStorage.setItem('ksm_intercom_custom_ringtone_name', file.name);
+        setRingtoneType('custom');
+        alert(`Ringtone "${file.name}" cargado con éxito.`);
+      } catch (err) {
+        alert("El archivo de audio es demasiado grande. Por favor, selecciona un archivo más corto (menor a 2MB).");
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   // Standalone QR and URL Utilities
   const getVisitorUrl = () => {
     const baseUrl = import.meta.env.VITE_VISITOR_BASE_URL || window.location.origin;
@@ -364,7 +435,7 @@ export const OwnerMode = ({ session }) => {
   };
 
   const handleTestSound = () => {
-    playRingSound(ringtoneType);
+    playRingSound(ringtoneType, customAudioRef);
     triggerVibration(ringtoneType);
   };
 
@@ -470,13 +541,48 @@ export const OwnerMode = ({ session }) => {
                 <select 
                   className={styles.owner__select}
                   value={ringtoneType} 
-                  onChange={(e) => setRingtoneType(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === 'custom') {
+                      if (audioInputRef.current) audioInputRef.current.click();
+                    } else {
+                      setRingtoneType(val);
+                    }
+                  }}
                 >
                   <option value="clasico">📞 Clásico</option>
                   <option value="digital">📟 Digital</option>
                   <option value="comercial">🔔 Comercial</option>
+                  <option value="custom">📁 [ Subir Ringtone Propio ]</option>
                 </select>
               </div>
+
+              {/* Hidden Native Audio Input */}
+              <input 
+                type="file" 
+                ref={audioInputRef} 
+                accept="audio/*" 
+                className={styles.owner__file_input} 
+                onChange={handleAudioUpload}
+                style={{ display: 'none' }}
+              />
+
+              {ringtoneType === 'custom' && (
+                <div className={styles.owner__row}>
+                  <span className={styles.owner__label} style={{ color: '#06d6a0', fontSize: '0.75rem', maxWidth: '60%', wordBreak: 'break-all' }}>
+                    ✓ Ringtone: {localStorage.getItem('ksm_intercom_custom_ringtone_name') || 'Cargado'}
+                  </span>
+                  <button 
+                    className={styles.owner__btn_action} 
+                    style={{ padding: '0.2rem 0.5rem', fontSize: '0.7rem' }}
+                    onClick={() => {
+                      setRingtoneType('comercial');
+                    }}
+                  >
+                    Restaurar
+                  </button>
+                </div>
+              )}
 
               <div className={styles.owner__row}>
                 <span className={styles.owner__label}>Activar Sonido</span>

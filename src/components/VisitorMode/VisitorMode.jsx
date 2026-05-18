@@ -3,6 +3,7 @@ import { supabase } from '../../services/supabaseClient';
 import styles from './VisitorMode.module.css';
 
 export const VisitorMode = ({ mode = 'portero', homeId }) => {
+  const [visitorMode, setVisitorMode] = useState(mode);
   const [isRinging, setIsRinging] = useState(false);
   const [cameraError, setCameraError] = useState(null);
   const [visitorStatus, setVisitorStatus] = useState('idle'); // 'idle', 'calling', 'ringing_comercio'
@@ -16,10 +17,11 @@ export const VisitorMode = ({ mode = 'portero', homeId }) => {
   // Referencias para WebRTC
   const pcRef = useRef(null);
   const channelRef = useRef(null);
+  const iceBufferRef = useRef([]);
 
   // Efecto 1: Encender cámara
   useEffect(() => {
-    if (mode === 'portero') {
+    if (visitorMode === 'portero') {
       const startCamera = async () => {
         try {
           const stream = await navigator.mediaDevices.getUserMedia({ 
@@ -38,7 +40,7 @@ export const VisitorMode = ({ mode = 'portero', homeId }) => {
         if (streamRef.current) streamRef.current.getTracks().forEach(track => track.stop());
       };
     }
-  }, [mode]);
+  }, [visitorMode]);
 
   // Efecto 2: Suscribirse a respuestas del propietario (WebRTC) en su canal específico
   useEffect(() => {
@@ -49,11 +51,24 @@ export const VisitorMode = ({ mode = 'portero', homeId }) => {
       .on('broadcast', { event: 'webrtc_answer' }, async ({ payload }) => {
         if (pcRef.current) {
           await pcRef.current.setRemoteDescription(new RTCSessionDescription(payload.answer));
+          // Process buffered candidates once remoteDescription is set
+          for (const candidate of iceBufferRef.current) {
+            try {
+              await pcRef.current.addIceCandidate(new RTCIceCandidate(candidate));
+            } catch (e) {
+              console.warn("Error adding buffered candidate on visitor", e);
+            }
+          }
+          iceBufferRef.current = [];
         }
       })
       .on('broadcast', { event: 'webrtc_ice' }, async ({ payload }) => {
         if (payload.target === 'visitor' && pcRef.current) {
-          await pcRef.current.addIceCandidate(new RTCIceCandidate(payload.candidate));
+          if (pcRef.current.remoteDescription) {
+            await pcRef.current.addIceCandidate(new RTCIceCandidate(payload.candidate));
+          } else {
+            iceBufferRef.current.push(payload.candidate);
+          }
         }
       })
       .on('broadcast', { event: 'doorbell_status' }, ({ payload }) => {
@@ -73,6 +88,9 @@ export const VisitorMode = ({ mode = 'portero', homeId }) => {
           setBgStyle({ backgroundImage: `url(${payload.value})`, backgroundSize: 'cover', backgroundPosition: 'center' });
         } else {
           setBgStyle({ background: presets[payload.value] || presets.preset_1 });
+        }
+        if (payload.appMode) {
+          setVisitorMode(payload.appMode);
         }
       })
       .on('broadcast', { event: 'owner_message' }, ({ payload }) => {
@@ -144,7 +162,7 @@ export const VisitorMode = ({ mode = 'portero', homeId }) => {
       <div className={styles.visitor__device}>
         <div className={styles.visitor__brand}>INTERCOM</div>
 
-        {mode === 'portero' ? (
+        {visitorMode === 'portero' ? (
           <div className={styles.visitor__screen_area}>
             <div className={styles.visitor__camera}>
               {visitorStatus === 'ringing_comercio' && (
