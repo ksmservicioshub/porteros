@@ -1,0 +1,358 @@
+.owner {
+  display: grid;
+  place-items: center;
+  height: 100vh;
+  width: 100vw;
+  background-color: var(--color-hw-body);
+  padding: 0;
+}
+
+.owner__screen_area {
+  background-color: var(--color-hw-panel);
+  width: 100%;
+  height: 100%;
+  max-width: 500px; /* Ancho de un celular */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2rem;
+  padding: 1rem;
+  box-shadow: 0 0 30px rgba(0,0,0,0.5);
+}
+
+.owner__camera {
+  width: 100%;
+  aspect-ratio: 3/4; /* Formato vertical porque el dueño lo ve en celular */
+  background-color: #000;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+}
+
+.owner__controls {
+  display: flex;
+  justify-content: space-around;
+  padding: 1.5rem;
+  background-color: rgba(255,255,255,0.05);
+  border-radius: 50px;
+  margin: 0 1rem;
+}
+
+.owner__btn {
+  width: 65px;
+  height: 65px;
+  border-radius: 50%;
+  border: none;
+  font-size: 1.5rem;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+}
+
+.owner__btn:active {
+  transform: scale(0.9);
+}
+
+.owner__btn--accept {
+  background-color: #06d6a0;
+  color: white;
+}
+
+.owner__btn--reject {
+  background-color: #ef476f;
+  color: white;
+}
+
+.owner__status {
+  color: white;
+  text-align: center;
+  font-size: 1.2rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+/* Dashboard container */
+.owner__dashboard {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  overflow-y: auto;
+  padding: 1rem 0.5rem;
+}
+
+.owner__title_area {
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+.owner__main_title {
+  color: #ffffff;
+  font-size: 1.4rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.owner__subtitle {
+  color: #a0a5af;
+  font-size: 0.85rem;
+  margin-top: 0.2rem;
+}
+
+/* Card design */
+.owner__card {
+  background-color: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.owner__card_title {
+  color: #ffffff;
+  font-size: 0.85rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-weight: bold;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 0.4rem;
+}
+
+/* Buttons / Switches */
+.owner__pill_group {
+  display: flex;
+  background-color: rgba(0, 0, 0, 0.25);
+  border-radius: 6px;
+  padding: 2px;
+}
+
+.owner__pill_btn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  padding: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: bold;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.owner__pill_btn--active {
+  background-color: var(--color-led-ring);
+  color: white;
+  box-shadow: 0 2px 8px rgba(239, 71, 111, 0.4);
+}
+
+.owner__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.owner__label {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.85rem;
+}
+
+.owner__select {
+  background-color: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+  border-radius: 4px;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.8rem;
+  outline: none;
+  cursor: pointer;
+}
+
+.owner__toggle {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 22px;
+}
+
+.owner__toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.owner__slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.1);
+  transition: .2s;
+  border-radius: 22px;
+}
+
+.owner__slider::before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .2s;
+  border-radius: 50%;
+}
+
+.owner__toggle input:checked + .owner__slider {
+  background-color: #06d6a0;
+}
+
+.owner__toggle input:checked + .owner__slider::before {
+  transform: translateX(22px);
+}
+
+.owner__btn_action {
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+  padding: 0.5rem 0.8rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.owner__btn_action:hover {
+  background-color: rgba(255, 255, 255, 0.12);
+}
+
+.owner__btn_action--primary {
+  background-color: #3a86ff;
+  border-color: #256ce1;
+}
+
+.owner__btn_action--primary:hover {
+  background-color: #256ce1;
+}
+
+/* QR Code Section */
+.owner__qr_container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.8rem;
+  background-color: white;
+  border-radius: 6px;
+  width: 100%;
+}
+
+.owner__qr_image {
+  width: 130px;
+  height: 130px;
+}
+
+.owner__alert_comercio {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.2rem;
+  width: 100%;
+}
+
+.owner__alert_icon {
+  font-size: 3.5rem;
+  animation: bellRing 0.8s infinite alternate;
+}
+
+@keyframes bellRing {
+  0% { transform: rotate(-15deg); }
+  100% { transform: rotate(15deg); }
+}
+
+/* Quick reply card inside ringing screens */
+.owner__quick_replies {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.owner__quick_title {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: bold;
+}
+
+.owner__preset_grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.owner__btn_preset {
+  background-color: rgba(6, 214, 160, 0.1);
+  border: 1px solid rgba(6, 214, 160, 0.3);
+  color: #06d6a0;
+  padding: 0.6rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.owner__btn_preset:hover {
+  background-color: rgba(6, 214, 160, 0.2);
+}
+
+.owner__custom_reply_row {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.4rem;
+}
+
+.owner__input_reply {
+  flex: 1;
+  background-color: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+  border-radius: 6px;
+  padding: 0.5rem;
+  font-size: 0.8rem;
+  outline: none;
+}
+
+/* Mic Mute indicators */
+.owner__btn--mute {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.owner__btn--muted {
+  background-color: #ef476f !important;
+  color: white !important;
+  box-shadow: 0 0 15px rgba(239, 71, 111, 0.4);
+}
+
+/* File selector */
+.owner__file_input {
+  display: none;
+}

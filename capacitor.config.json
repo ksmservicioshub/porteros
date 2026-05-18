@@ -1,0 +1,9 @@
+{
+  "appId": "com.ksmgrigory.qrintercom",
+  "appName": "QR Intercom Pro",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "cleartext": true
+  }
+}

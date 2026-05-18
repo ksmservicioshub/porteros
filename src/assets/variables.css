@@ -1,0 +1,41 @@
+/* filepath: src/assets/variables.css */
+
+:root {
+    /* Paleta Commax (Blanco plástico y Azul Marino) */
+    --color-hw-body: #f5f6f8; /* Plástico blanco */
+    --color-hw-panel: #263353; /* Azul marino de la pantalla */
+    --color-hw-trim: #e0e4e8;
+    
+    /* Botones táctiles */
+    --color-touch-icon: rgba(255, 255, 255, 0.5);
+    --color-touch-icon-active: #ffffff;
+    
+    /* Indicadores LED */
+    --color-led-ring: #ef476f;
+  
+    /* Textos */
+    --font-family-tech: 'Inter', system-ui, -apple-system, sans-serif;
+    --color-text-main: #333333;
+  
+    /* Sombras (Efecto de plástico sobre la pared) */
+    --shadow-hw-out: 0 20px 40px rgba(0, 0, 0, 0.15), inset 0 2px 5px rgba(255, 255, 255, 0.9);
+    
+    /* Espaciados y Grid */
+    --spacing-sm: 0.5rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --hardware-radius: 4px; /* Bordes más rectangulares */
+  }
+  
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+  
+  body {
+    background-color: #d1d5db; /* Pared de fondo neutra */
+    color: var(--color-text-main);
+    font-family: var(--font-family-tech);
+    -webkit-tap-highlight-color: transparent;
+  }
